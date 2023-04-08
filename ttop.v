@@ -73,7 +73,7 @@ module ttop ();
 
     initial
     begin
-        $dumpfile("ttop.vcd");
+        $dumpfile("tb.vcd");
         $dumpvars;			// dump everything in the ttop module
 
 		ctr = 0;
