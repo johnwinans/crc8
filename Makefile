@@ -1,23 +1,19 @@
-
-TARGETS=tb
+GTK_ARGS=-A --rcvar 'fontname_signals Monospace 13' --rcvar 'fontname_waves Monospace 12'
 
 VSRC=\
-	ttop.v \
-	crc.v
+	crc.v \
+	crc_tb.v
 
-NOT_YET=\
-	crc8_wcdma.v
+all: crc
 
-all: $(TARGETS)
-
-tb: $(VSRC)
+crc_tb.vvp: $(VSRC)
 	iverilog -o $@ $^
 
-run: $(TARGETS)
-	vvp tb
+crc_tb.vcd: crc_tb.vvp
+	vvp $^
 
-plot:
-	gtkwave -A --rcvar 'fontname_signals Monospace 13' --rcvar 'fontname_waves Monospace 12' tb.vcd
+crc: crc_tb.vcd
+	gtkwave $(GTK_ARGS) crc_tb.vcd
 
 clean:
-	rm -f $(TARGETS) *.vcd
+	rm -f *.vvp *.vcd

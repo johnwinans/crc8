@@ -1,3 +1,10 @@
+# CRC
+
+A generic CRC generator/checker with 8-bit testbench.
+
+See [crccalc.com](https://crccalc.com)
+
+# HOWTO
 
 Install iverilog:
 

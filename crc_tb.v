@@ -25,24 +25,28 @@
 
 /**
 * A test bench for multiple standard 8-bit CRCs.
+*
+* see: https://crccalc.com
 ***************************************************************************/
 module ttop ();
 
-    reg clk;                ///< free running clock
-    reg rst;                ///< reset (active high)
-    reg data;               ///< input bit-stream
-    reg data_ref;           ///< reflected input bit-stream
-    reg enable;             ///< advance the CRC calc on the next clk
-    reg ready;              ///< true when the CRC value is valid
+    reg clk         = 0;        ///< free running clock
+    reg rst         = 1;        ///< reset (active high)
+    reg data        = 0;        ///< input bit-stream
+    reg data_ref    = 0;        ///< reflected input bit-stream
+    reg enable      = 0;        ///< advance the CRC calc on the next clk
+    reg ready       = 0;        ///< true when the CRC value is valid
 
+    // The following can appear misleading!  Note that we are reversing the order of the bits
     // little endian = [n:0]
     // big endian = [0:n]
 
     localparam MSG_LEN = 9*8;
     reg [MSG_LEN-1:0] check_data = "123456789";
-    reg [0:MSG_LEN-1] check_data_ref = "987654321"; // RS232-style little-endian xmission
 
-    reg [7:0] ctr;      // a bit counter 
+    reg [7:0] ctr       = 0;      // a bit counter 
+    reg [7:0] ix        = 0;      // the next bit to send index 
+    reg [7:0] ix_ref    = 0;      // the next bit to send index in reflected order
 
     localparam RST_PERIOD = 4;
 
@@ -73,15 +77,11 @@ module ttop ();
 
     initial
     begin
-        $dumpfile("tb.vcd");
+        $dumpfile("crc_tb.vcd");
         $dumpvars;          // dump everything in the ttop module
 
-        ctr = 0;
-        clk = 0;
-        rst = 1;
-        data = 0;
-        enable = 0;
-        #5 rst = 0;
+
+        #5 rst <= 0;
     end
 
     always #1 clk = ~clk;
@@ -93,18 +93,27 @@ module ttop ();
         end else begin
             ctr <= ctr+1;
         end
+        $strobe( "%t: rst:%x enable:%d ready:%d data:%x ref:%x ix:%3d %3d", $time, rst, enable, ready, data, data_ref, ix, ix_ref );
     end
 
     always @(*) begin
-        enable = ctr < MSG_LEN;
-        data = check_data[(MSG_LEN-1)-ctr]; 
-        data_ref = check_data_ref[(MSG_LEN-1)-ctr]; 
-        ready = (ctr == MSG_LEN);
+        enable      = ctr < MSG_LEN;                        // enable CRC generator until we run out of bits
+
+        ix          = enable ? (MSG_LEN-1)-ctr : 'hx;       // bitwise big-endian order
+        ix_ref      = enable ? 8*(ix/8)+7-(ix%8) : 'hx;     // bitwise little-endian order
+
+        data        = check_data[ix];                       // send MSb first for each byte
+        data_ref    = check_data[ix_ref];                   // send LSb first for each byte
+        ready       = (ctr == MSG_LEN);                     // ready on clk follwing the last transmitted bit
     end
 
     initial
     begin
-        #200;
+        // wait till we are ready
+        @(posedge ready);
+
+        // add some margin to the end of the waveform
+        #8;
         $display("    crc8: %h %b", crc_8_out, crc_8_out==8'hf4);
         $display("cdma2000: %h %b", crc_cdma2000_out, crc_cdma2000_out==8'hda);
         $display("    darc: %h %b", crc_darc_out, crc_darc_out==8'h15);

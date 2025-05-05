@@ -25,6 +25,7 @@
 * @note Since this is a bit-serial implementation, there is no option at 
 * this level to reflect the input bits.  (Input reflection normally 
 * represents the natural order of the data arrival.)
+*
 ***************************************************************************/
 module crc 
 #(
