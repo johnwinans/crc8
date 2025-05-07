@@ -41,7 +41,7 @@ module crc
     input wire rst,                     ///< sync reset when true and clk rising edge
     input wire data,                    ///< message data bits
     input wire enable,                  ///< accept data when high & clk rising
-    output wire [7:0] crc_out           ///< the running value of calculated crc
+    output wire [BITS-1:0] crc_out      ///< the running value of calculated crc
 );
 
     reg [BITS-1:0] crc_reg;
@@ -53,7 +53,7 @@ module crc
         if (rst) begin
             crc_reg <= INIT;
         end else if (enable) begin
-            crc_reg <= {crc_reg[6:0], xdi} ^ (xdi ? poly_reg : 0);
+            crc_reg <= {crc_reg[BITS-2:0], xdi} ^ (xdi ? poly_reg : 0);
         end
     end
 
