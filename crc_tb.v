@@ -80,8 +80,9 @@ module ttop ();
         $dumpfile("crc_tb.vcd");
         $dumpvars;          // dump everything in the ttop module
 
-
-        #5 rst <= 0;
+        #4;
+        @(posedge clk);
+        rst <= 0;
     end
 
     always #1 clk = ~clk;
@@ -109,11 +110,9 @@ module ttop ();
 
     initial
     begin
-        // wait till we are ready
-        @(posedge ready);
+        @(posedge ready);   // wait till we are ready
+        #8;                 // add some margin to the end of the waveform
 
-        // add some margin to the end of the waveform
-        #8;
         $display("    crc8: %h %b", crc_8_out, crc_8_out==8'hf4);
         $display("cdma2000: %h %b", crc_cdma2000_out, crc_cdma2000_out==8'hda);
         $display("    darc: %h %b", crc_darc_out, crc_darc_out==8'h15);
