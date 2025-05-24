@@ -42,7 +42,7 @@ module ttop ();
     // big endian = [0:n]
 
     localparam MSG_LEN = 9*8;
-    reg [MSG_LEN-1:0] check_data = "123456789";
+    reg [MSG_LEN-1:0] check_data = "123456789";      
 
     reg [7:0] ctr       = 0;      // a bit counter 
     reg [7:0] ix        = 0;      // the next bit to send index 
@@ -50,34 +50,16 @@ module ttop ();
 
     localparam RST_PERIOD = 4;
 
+    // 16-bit reflected tests (bitwise little-endian data arrival)
+    wire [15:0] crc_cdma2000_out;       
+    crc #(.BITS(16), .POLY(16'hC867), .INIT(16'hFFFF), .REF_OUT(0), .XOR_OUT(16'h0)) crc_cdma2000 (.clk(clk), .rst(rst), .data(data), .enable(enable), .crc_out(crc_cdma2000_out));
 
-    // 8-bit reflected tests (bitwise little-endian data arrival)
-    wire [7:0] crc_wcdma_out;       
-    crc #(.POLY(8'h9B), .INIT(8'h00)) crc_wcdma (.clk(clk), .rst(rst), .data(data_ref), .enable(enable), .crc_out(crc_wcdma_out));
-    wire [7:0] crc_rohc_out;
-    crc #(.POLY(8'h07), .INIT(8'hff)) crc_rohc (.clk(clk), .rst(rst), .data(data_ref), .enable(enable), .crc_out(crc_rohc_out));
-    wire [7:0] crc_maxim_out;
-    crc #(.POLY(8'h31), .INIT(8'h00)) crc_maxim (.clk(clk), .rst(rst), .data(data_ref), .enable(enable), .crc_out(crc_maxim_out));
-    wire [7:0] crc_ebu_out;
-    crc #(.POLY(8'h1D), .INIT(8'hff)) crc_ebu (.clk(clk), .rst(rst), .data(data_ref), .enable(enable), .crc_out(crc_ebu_out));
-    wire [7:0] crc_darc_out;
-    crc #(.POLY(8'h39), .INIT(8'h00)) crc_darc (.clk(clk), .rst(rst), .data(data_ref), .enable(enable), .crc_out(crc_darc_out));
-
-    // 8-bit un-reflected tests (bitwise big-endian data arrival)
-    wire [7:0] crc_8_out;
-    crc #(.POLY(8'h07), .INIT(8'h00), .REF_OUT(0)) crc_8 (.clk(clk), .rst(rst), .data(data), .enable(enable), .crc_out(crc_8_out));
-    wire [7:0] crc_cdma2000_out;
-    crc #(.POLY(8'h9b), .INIT(8'hff), .REF_OUT(0)) crc_cdma2000 (.clk(clk), .rst(rst), .data(data), .enable(enable), .crc_out(crc_cdma2000_out));
-    wire [7:0] crc_dvb52_out;
-    crc #(.POLY(8'hd5), .INIT(8'h00), .REF_OUT(0)) crc_dvb52 (.clk(clk), .rst(rst), .data(data), .enable(enable), .crc_out(crc_dvb52_out));
-    wire [7:0] crc_code_out;
-    crc #(.POLY(8'h1d), .INIT(8'hfd), .REF_OUT(0)) crc_code (.clk(clk), .rst(rst), .data(data), .enable(enable), .crc_out(crc_code_out));
-    wire [7:0] crc_itu_out;
-    crc #(.POLY(8'h07), .INIT(8'h00), .REF_OUT(0), .XOR_OUT(8'h55)) crc_itu (.clk(clk), .rst(rst), .data(data), .enable(enable), .crc_out(crc_itu_out));
+    wire [15:0] crc_arc_out;       
+    crc #(.BITS(16), .POLY(16'h8005), .INIT(16'h0000), .REF_OUT(1), .XOR_OUT(16'h0)) crc_arc (.clk(clk), .rst(rst), .data(data_ref), .enable(enable), .crc_out(crc_arc_out));
 
     initial
     begin
-        $dumpfile("crc_tb.vcd");
+        $dumpfile("crc16_tb.vcd");
         $dumpvars;          // dump everything in the ttop module
 
         #4;
@@ -113,16 +95,8 @@ module ttop ();
         @(posedge ready);   // wait till we are ready
         #8;                 // add some margin to the end of the waveform
 
-        $display("    crc8: %h %b", crc_8_out, crc_8_out==8'hf4);
-        $display("cdma2000: %h %b", crc_cdma2000_out, crc_cdma2000_out==8'hda);
-        $display("    darc: %h %b", crc_darc_out, crc_darc_out==8'h15);
-        $display("   dvb62: %h %b", crc_dvb52_out, crc_dvb52_out==8'hbc);
-        $display("     ebu: %h %b", crc_ebu_out, crc_ebu_out==8'h97);
-        $display("   icode: %h %b", crc_code_out, crc_code_out==8'h7e);
-        $display("     itu: %h %b", crc_itu_out, crc_itu_out==8'ha1);
-        $display("   maxim: %h %b", crc_maxim_out, crc_maxim_out==8'ha1);
-        $display("    rohc: %h %b", crc_rohc_out, crc_rohc_out==8'hd0);
-        $display("   wcdma: %h %b", crc_wcdma_out, crc_wcdma_out==8'h25);
+        $display("cdma2000: %h %b", crc_cdma2000_out, crc_cdma2000_out==16'h4C06);
+        $display("     arc: %h %b", crc_arc_out, crc_arc_out==16'hBB3D);
 
         $finish;
     end

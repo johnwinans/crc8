@@ -26,6 +26,11 @@
 * this level to reflect the input bits.  (Input reflection normally 
 * represents the natural order of the data arrival.)
 *
+* @note This implementation uses the "Direct Method." This provides the CRC
+* value immediately after the last message bit has been received. (This
+* is in contrast to the "Zero-Augmented Method" where trailing zeros are
+* clocked into the generater after the end of the message.)
+*
 ***************************************************************************/
 module crc 
 #(
@@ -45,15 +50,13 @@ module crc
 );
 
     reg [BITS-1:0] crc_reg;
-
     wire xdi = crc_reg[BITS-1]^data;
-    wire [BITS-1:0] poly_reg = {POLY[BITS-1:1],1'b0};   // turn off the low bit
 
     always @(posedge clk) begin
         if (rst) begin
             crc_reg <= INIT;
         end else if (enable) begin
-            crc_reg <= {crc_reg[BITS-2:0], xdi} ^ (xdi ? poly_reg : 0);
+            crc_reg <= {crc_reg[BITS-2:0], 1'b0} ^ (xdi ? POLY : 0);
         end
     end
 
