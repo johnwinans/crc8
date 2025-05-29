@@ -51,6 +51,7 @@ module crc
 
     reg [BITS-1:0] crc_reg;
     wire xdi = crc_reg[BITS-1]^data;
+    wire [BITS-1:0] crc_ref;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -60,11 +61,16 @@ module crc
         end
     end
 
-    // reflect the output value & XOR the result... or not
+    // reflect the CRC value... or not
+    // this will be optimized into wire connections
     genvar j;
     generate for(j=0; j<BITS; j=j+1) 
-        assign crc_out[j] = (REF_OUT ? crc_reg[BITS-1-j] : crc_reg[j]) ^ XOR_OUT[j]; 
+        assign crc_ref[j] = (REF_OUT ? crc_reg[BITS-1-j] : crc_reg[j]);
     endgenerate
+
+    // XOR the (possibly reflected) result
+    // this will get optimized into inverters or nothing because XOR_OUT is a constant
+    assign crc_out = crc_ref ^ XOR_OUT;
 
 endmodule
 
