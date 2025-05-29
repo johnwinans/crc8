@@ -37,10 +37,6 @@ module ttop ();
     reg enable      = 0;        ///< advance the CRC calc on the next clk
     reg ready       = 0;        ///< true when the CRC value is valid
 
-    // The following can appear misleading!  Note that we are reversing the order of the bits
-    // little endian = [n:0]
-    // big endian = [0:n]
-
     localparam MSG_LEN = 9*8;
     reg [MSG_LEN-1:0] check_data = "123456789";
 
@@ -97,6 +93,10 @@ module ttop ();
         $strobe( "%t: rst:%x enable:%d ready:%d data:%x ref:%x ix:%3d %3d", $time, rst, enable, ready, data, data_ref, ix, ix_ref );
     end
 
+    // The following can appear misleading!  Note that data_ref is a reflected (reversed) bit ordering
+    // little endian = [n:0]
+    // big endian = [0:n]
+
     always @(*) begin
         enable      = ctr < MSG_LEN;                        // enable CRC generator until we run out of bits
 
@@ -105,7 +105,7 @@ module ttop ();
 
         data        = check_data[ix];                       // send MSb first for each byte
         data_ref    = check_data[ix_ref];                   // send LSb first for each byte
-        ready       = (ctr == MSG_LEN);                     // ready on clk follwing the last transmitted bit
+        ready       = (ctr == MSG_LEN);                     // ready on clk following the last transmitted bit
     end
 
     initial
